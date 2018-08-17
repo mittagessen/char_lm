@@ -22,7 +22,7 @@ class TextSet(data.Dataset):
         self.oh_dim = len(self.chars)
 
     def __len__(self):
-        return len(self.text)/self.seqlen
+        return len(self.text)//self.seqlen
 
     def __getitem__(self, idx):
         """
