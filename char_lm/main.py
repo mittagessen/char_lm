@@ -105,7 +105,7 @@ def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
                 opti.zero_grad()
                 o = model(input)
                 o = o[:, seq_len - valid_seq_len, :].contiguous()
-                target = target[:, seq_len - valid_seq_len, :].contiguous().long()
+                target = target[:, :seq_len - valid_seq_len].contiguous()
                 loss = criterion(o, target)
                 epoch_loss += loss.item()
                 loss.backward()
