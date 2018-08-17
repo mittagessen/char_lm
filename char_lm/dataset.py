@@ -31,4 +31,4 @@ class TextSet(data.Dataset):
         start = np.random.randint(len(self.text) - self.seqlen - 1)
         labels = torch.tensor([self.chars[c] for c in self.text[start:start+self.seqlen]])
         target = torch.tensor([self.chars[c] for c in self.text[start+1:start+self.seqlen+1]])
-        return torch.eye(self.oh_dim)[labels.long()].t().float(), torch.eye(self.oh_dim)[target.long()].t().float()
+        return torch.eye(self.oh_dim)[labels.long()].t(), torch.eye(self.oh_dim)[target.long()].t()
