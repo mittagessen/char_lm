@@ -29,7 +29,7 @@ class TextSet(data.Dataset):
         Returns a random one-hot encoded sequence of length seqlen.
         """
         start = np.random.randint(len(self.text) - self.seqlen - 1)
-        labels = [self.chars[c] for c in self.text[start:start+self.seqlen]]
-        target = [self.chars[c] for c in self.text[start+1:start+self.seqlen+1]]
+        labels = torch.tensor([self.chars[c] for c in self.text[start:start+self.seqlen]])
+        target = torch.tensor([self.chars[c] for c in self.text[start+1:start+self.seqlen+1]])
         oh = torch.zeros(self.oh_dim, self.seqlen)
         return oh.scatter(0, labels, 1), oh.scatter(0, target, 1)
