@@ -88,7 +88,7 @@ def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
 
     print('loading network')
 
-    model = CausalNet(len(train_set.chars), len(train_set.chars), hidden, layers, kernel).to(device)
+    model = CausalNet(len(train_set.oh_dim), len(train_set.oh_dim), hidden, layers, kernel).to(device)
     criterion = nn.CrossEntropyLoss()
 
     if optimizer == 'SGD':
