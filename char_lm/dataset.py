@@ -4,6 +4,8 @@ import torch
 import numpy as np
 import unicodedata
 
+from collections import defaultdict
+
 class TextSet(data.Dataset):
 
     def __init__(self, files, seqlen=100, chars=None):
@@ -16,10 +18,11 @@ class TextSet(data.Dataset):
                 self.chars.update(t)
                 self.text += t
         if not chars:
-            self.chars = {c: i for i, c in enumerate(self.chars)}
+            self.chars = {c: i+1 for i, c in enumerate(self.chars)}
         else:
             self.chars = chars
-        self.oh_dim = len(self.chars)
+        self.chars = defaultdict(lambda: 0, self.chars)
+        self.oh_dim = len(self.chars) + 1
 
     def __len__(self):
         return len(self.text)//self.seqlen
