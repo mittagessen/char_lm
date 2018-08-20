@@ -112,12 +112,12 @@ def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
                 opti.step()
         torch.save(model.state_dict(), '{}_{}.ckpt'.format(name, epoch))
         print("===> epoch {} complete: avg. loss: {:.4f}".format(epoch, epoch_loss / len(train_data_loader)))
-        val_loss = evaluate(model, device, criterion, val_data_loader)
+        val_loss = evaluate(model, device, criterion, val_data_loader, seq_len, valid_seq_len)
         model.train()
         st_it.update(val_loss)
         print("===> epoch {} validation loss: {:.4f}".format(epoch, val_loss))
 
-def evaluate(model, device, criterion, data_loader):
+def evaluate(model, device, criterion, data_loader, seq_len, valid_seq_len):
     """
     """
     model.eval()
