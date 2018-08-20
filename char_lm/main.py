@@ -123,10 +123,10 @@ def evaluate(model, device, criterion, data_loader, seq_len, valid_seq_len):
     model.eval()
     loss = 0.0
     with torch.no_grad():
-         for sample in data_loader:
-             input, target = sample[0].to(device), sample[1].to(device)
-             o = model(input)
-             o = o[:, seq_len - valid_seq_len, :].contiguous()
-             target = target[:, seq_len - valid_seq_len, :].contiguous()
-             loss += criterion(o, target)
+        for sample in data_loader:
+            input, target = sample[0].to(device), sample[1].to(device)
+            o = model(input)
+            o = o[:, :, :(seq_len - valid_seq_len)].contiguous()
+            target = target[:, :(seq_len - valid_seq_len)].contiguous()
+            loss += criterion(o, target)
     return loss / len(data_loader)
