@@ -80,15 +80,15 @@ def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
     torch.set_num_threads(threads)
 
     train_set = TextSet(glob.glob('{}/**/*.txt'.format(ground_truth), recursive=True))
-    train_data_loader = DataLoader(dataset=train_set, num_workers=workers, batch_size=16, pin_memory=True)
+    train_data_loader = DataLoader(dataset=train_set, num_workers=workers, batch_size=128, pin_memory=True)
     val_set = TextSet(glob.glob('{}/**/*.txt'.format(validation), recursive=True), chars=train_set.chars)
-    val_data_loader = DataLoader(dataset=val_set, num_workers=workers, batch_size=16, pin_memory=True)
+    val_data_loader = DataLoader(dataset=val_set, num_workers=workers, batch_size=128, pin_memory=True)
 
     device = torch.device(device)
 
     print('loading network')
 
-    model = CausalNet(len(train_set.oh_dim), len(train_set.oh_dim), hidden, layers, kernel).to(device)
+    model = CausalNet(train_set.oh_dim, train_set.oh_dim, hidden, layers, kernel).to(device)
     criterion = nn.CrossEntropyLoss()
 
     if optimizer == 'SGD':
