@@ -83,6 +83,7 @@ def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
     train_data_loader = DataLoader(dataset=train_set, num_workers=workers, batch_size=128, pin_memory=True)
     val_set = TextSet(glob.glob('{}/**/*.txt'.format(validation), recursive=True), chars=train_set.chars)
     val_data_loader = DataLoader(dataset=val_set, num_workers=workers, batch_size=128, pin_memory=True)
+    avg_word_len = val_set.avg_word_len()
 
     device = torch.device(device)
 
@@ -115,7 +116,10 @@ def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
         val_loss = evaluate(model, device, criterion, val_data_loader, seq_len, valid_seq_len)
         model.train()
         st_it.update(val_loss)
-        print("===> epoch {} validation loss: {:.4f}".format(epoch, val_loss))
+        print("===> epoch {} validation loss: {:.4f} (ppl char/word: {:.4f}/{:.4f})".format(epoch,
+                                                                                            val_loss,
+                                                                                            np.exp(val_loss),
+                                                                                            np.exp(val_loss*avg_word_len)))
 
 def evaluate(model, device, criterion, data_loader, seq_len, valid_seq_len):
     """

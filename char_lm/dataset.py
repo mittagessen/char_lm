@@ -24,6 +24,12 @@ class TextSet(data.Dataset):
         self.chars = defaultdict(lambda: 0, self.chars)
         self.oh_dim = len(self.chars) + 1
 
+    def avg_word_len(self):
+        """
+        Average word length of data set.
+        """
+        return len(self.text)/len(self.text.split())
+
     def __len__(self):
         return len(self.text)//self.seqlen
 
