@@ -3,6 +3,7 @@ import torch
 
 import numpy as np
 import unicodedata
+import bidi.algorithm as bd
 
 from collections import defaultdict
 
@@ -16,7 +17,7 @@ class TextSet(data.Dataset):
             with open(x, 'r') as fp:
                 t = unicodedata.normalize('NFD', fp.read())
                 self.chars.update(t)
-                self.text += t
+                self.text += bd.get_display(t)
         if not chars:
             self.chars = {c: i+1 for i, c in enumerate(self.chars)}
         else:
