@@ -40,17 +40,23 @@ class CausalConv1d(nn.Conv1d):
 
 class CausalBlock(nn.Module):
 
-    def __init__(self, in_channels, out_channels, kernel_size, stride, dilation, dropout=0.1):
+    def __init__(self, in_channels, out_channels, kernel_size, stride, dilation, dropout=0.1, reg='dropout'):
         super(CausalBlock, self).__init__()
+        if reg == 'dropout2d':
+            reg_l= nn.Dropout2d(dropout)
+        elif reg == 'dropout':
+            reg_l = nn.Dropout(dropout)
+        else:
+            raise Exception('invalid regularization layer selected')
         self.layer = nn.Sequential(CausalConv1d(in_channels, out_channels, kernel_size, stride=stride, dilation=dilation),
                                    nn.ReLU(),
-                                   nn.Dropout2d(dropout),
+                                   reg_l,
                                    CausalConv1d(out_channels, out_channels, kernel_size, stride=stride, dilation=dilation),
                                    nn.ReLU(),
-                                   nn.Dropout2d(dropout),
+                                   reg_l,
                                    CausalConv1d(out_channels, out_channels, kernel_size, stride=stride, dilation=dilation),
                                    nn.ReLU(),
-                                   nn.Dropout2d(dropout))
+                                   reg_l)
         # downsampling for residual
         self.residual = nn.Conv1d(in_channels, out_channels, 1) if in_channels != out_channels else None
 
@@ -58,6 +64,7 @@ class CausalBlock(nn.Module):
         o = self.layer(x)
         o = torch.relu(o + self.residual(x) if self.residual else o + x)
         return o
+
 
 class CausalNet(nn.Module):
 
@@ -72,8 +79,19 @@ class CausalNet(nn.Module):
                                  dropout=dropout))
         self.lin = nn.Linear(out_channels, output_size)
         self.net = nn.Sequential(*l)
+        self.init_weights()
 
     def forward(self, x):
         o = self.net(x)
         o = self.lin(o.transpose(1, 2))
         return o.transpose(1, 2)
+
+    def init_weights(self):
+        def _wi(m):
+            if isinstance(m, torch.nn.Conv1d):
+                torch.nn.init.kaiming_uniform_(m.weight, nonlinearity='relu')
+                torch.nn.init.constant_(m.bias, 0)
+            elif isinstance(m, torch.nn.Linear):
+                torch.nn.init.xavier_uniform_(m.weight)
+                torch.nn.init.constant_(m.bias, 0)
+        self.net.apply(_wi)
