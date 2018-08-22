@@ -57,7 +57,7 @@ def cli():
 
 @cli.command()
 @click.option('-n', '--name', default='model', help='prefix for checkpoint file names')
-@click.option('-l', '--lrate', default=0.1, help='initial learning rate')
+@click.option('-l', '--lrate', default=0.3, help='initial learning rate')
 @click.option('-w', '--workers', default=0, help='number of workers loading training data')
 @click.option('-d', '--device', default='cpu', help='pytorch device')
 @click.option('-v', '--validation', default='val', help='validation set location')
@@ -68,13 +68,14 @@ def cli():
 @click.option('--valid-seq-len', default=320, help='part of the training sample used for back propagation')
 @click.option('--seq-len', default=400, help='total training sample sequence length')
 @click.option('--hidden', default=100, help='numer of hidden units per block')
-@click.option('--layers', default=2, help='number of 3-layer blocks')
+@click.option('--layers', default=3, help='number of 3-layer blocks')
 @click.option('--kernel', default=3, help='kernel size')
 @click.option('-N', '--batch-size', default=128, help='batch size')
+@click.option('-r', '--regularization', default='dropout2d', type=click.Choice(['dropout', 'dropout2d', 'batchnorm']))
 @click.argument('ground_truth', nargs=1)
 def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
           threads, valid_seq_len, seq_len, hidden, layers, kernel, batch_size,
-          ground_truth):
+          regularization, ground_truth):
 
     print('model output name: {}'.format(name))
 
@@ -90,7 +91,7 @@ def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
 
     print('loading network')
 
-    model = CausalNet(train_set.oh_dim, train_set.oh_dim, hidden, layers, kernel).to(device)
+    model = CausalNet(train_set.oh_dim, train_set.oh_dim, hidden, layers, kernel, regularization).to(device)
     criterion = nn.CrossEntropyLoss()
 
     if optimizer == 'SGD':
