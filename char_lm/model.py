@@ -43,20 +43,21 @@ class CausalBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride, dilation, dropout=0.1, reg='dropout'):
         super(CausalBlock, self).__init__()
         if reg == 'dropout2d':
-            reg_l= nn.Dropout2d(dropout)
+            reg_l = partial(nn.Dropout2d, dropout)
         elif reg == 'dropout':
-            reg_l = nn.Dropout(dropout)
+            reg_l = partial(nn.Dropout, dropout)
+        elif reg == 'batchnorm':
+            reg_l = partial(nn.BatchNorm1d, out_channels)
         else:
             raise Exception('invalid regularization layer selected')
         self.layer = nn.Sequential(CausalConv1d(in_channels, out_channels, kernel_size, stride=stride, dilation=dilation),
                                    nn.ReLU(),
-                                   reg_l,
+                                   reg_l(),
                                    CausalConv1d(out_channels, out_channels, kernel_size, stride=stride, dilation=dilation),
                                    nn.ReLU(),
-                                   reg_l,
+                                   reg_l(),
                                    CausalConv1d(out_channels, out_channels, kernel_size, stride=stride, dilation=dilation),
-                                   nn.ReLU(),
-                                   reg_l)
+                                   reg_l())
         # downsampling for residual
         self.residual = nn.Conv1d(in_channels, out_channels, 1) if in_channels != out_channels else None
 
@@ -68,7 +69,7 @@ class CausalBlock(nn.Module):
 
 class CausalNet(nn.Module):
 
-    def __init__(self, input_size, output_size, out_channels, layers, kernel_size, dropout=0.1):
+    def __init__(self, input_size, output_size, out_channels, layers, kernel_size, dropout=0.1, reg='dropout'):
         super(CausalNet, self).__init__()
         l = []
         l.append(CausalBlock(input_size, out_channels, kernel_size, stride=1, dilation=1, dropout=dropout))
@@ -76,7 +77,7 @@ class CausalNet(nn.Module):
             dilation_size = 2 ** i
             l.append(CausalBlock(out_channels, out_channels, kernel_size,
                                  stride=1, dilation=dilation_size,
-                                 dropout=dropout))
+                                 dropout=dropout, reg=reg))
         self.lin = nn.Linear(out_channels, output_size)
         self.net = nn.Sequential(*l)
         self.init_weights()
