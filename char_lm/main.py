@@ -70,9 +70,10 @@ def cli():
 @click.option('--hidden', default=100, help='numer of hidden units per block')
 @click.option('--layers', default=2, help='number of 3-layer blocks')
 @click.option('--kernel', default=3, help='kernel size')
+@click.option('-N', '--batch-size', default=128, help='batch size')
 @click.argument('ground_truth', nargs=1)
 def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
-          threads, valid_seq_len, seq_len, hidden, layers, kernel,
+          threads, valid_seq_len, seq_len, hidden, layers, kernel, batch_size,
           ground_truth):
 
     print('model output name: {}'.format(name))
@@ -80,9 +81,9 @@ def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
     torch.set_num_threads(threads)
 
     train_set = TextSet(glob.glob('{}/**/*.txt'.format(ground_truth), recursive=True))
-    train_data_loader = DataLoader(dataset=train_set, num_workers=workers, batch_size=128, pin_memory=True)
+    train_data_loader = DataLoader(dataset=train_set, num_workers=workers, batch_size=batch_size, pin_memory=True)
     val_set = TextSet(glob.glob('{}/**/*.txt'.format(validation), recursive=True), chars=train_set.chars)
-    val_data_loader = DataLoader(dataset=val_set, num_workers=workers, batch_size=128, pin_memory=True)
+    val_data_loader = DataLoader(dataset=val_set, num_workers=workers, batch_size=batch_size, pin_memory=True)
     avg_word_len = val_set.avg_word_len()
 
     device = torch.device(device)
@@ -116,10 +117,10 @@ def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
         val_loss = evaluate(model, device, criterion, val_data_loader, seq_len, valid_seq_len)
         model.train()
         st_it.update(val_loss)
-        print("===> epoch {} validation loss: {:.4f} (ppl char/word: {:.4f}/{:.4f})".format(epoch,
-                                                                                            val_loss,
-                                                                                            np.exp(val_loss),
-                                                                                            np.exp(val_loss*avg_word_len)))
+        print("===> epoch {} bpc: {:.4f} (ppl char/word: {:.4f}/{:.4f})".format(epoch,
+                                                                                1/np.log(2)*val_loss,
+                                                                                np.exp(val_loss),
+                                                                                np.exp(val_loss*avg_word_len)))
 
 def evaluate(model, device, criterion, data_loader, seq_len, valid_seq_len):
     """
