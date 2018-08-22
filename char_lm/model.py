@@ -11,6 +11,8 @@ from torch import nn
 
 from PIL import Image
 
+from functools import partial
+
 class CausalConv1d(nn.Conv1d):
     """
     Simple 1d causal convolution.
