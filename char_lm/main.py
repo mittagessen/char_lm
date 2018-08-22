@@ -56,7 +56,7 @@ def cli():
     pass
 
 @cli.command()
-@click.option('-n', '--name', default='model', help='prefix for checkpoint file names')
+@click.option('-n', '--name', default=None, help='prefix for checkpoint file names')
 @click.option('-l', '--lrate', default=0.3, help='initial learning rate')
 @click.option('-w', '--workers', default=0, help='number of workers loading training data')
 @click.option('-d', '--device', default='cpu', help='pytorch device')
@@ -77,6 +77,8 @@ def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
           threads, valid_seq_len, seq_len, hidden, layers, kernel, batch_size,
           regularization, ground_truth):
 
+    if not name:
+        name = '{}_{}_{}_{}_{}_{}_{}_{}'.format(optimizer.lower(), lrate, valid_seq_len, seq_len, hidden, layers, kernel, regularization)
     print('model output name: {}'.format(name))
 
     torch.set_num_threads(threads)
