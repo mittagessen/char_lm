@@ -75,7 +75,7 @@ def eval(model, workers, device, valid_seq_len, seq_len, hidden, layers, kernel,
 
     print('loading test set')
 
-    test_set = TextSet(glob.glob('{}/**/*.txt'.format(test), recursive=True) chars=train_set.chars)
+    test_set = TextSet(glob.glob('{}/**/*.txt'.format(test), recursive=True), chars=train_set.chars)
     test_data_loader = DataLoader(dataset=test_set, num_workers=workers, batch_size=batch_size, pin_memory=True)
 
     device = torch.device(device)
