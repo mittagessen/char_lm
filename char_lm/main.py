@@ -66,9 +66,15 @@ def cli():
 @click.option('--kernel', default=3, help='kernel size')
 @click.option('-N', '--batch-size', default=128, help='batch size')
 @click.option('-r', '--regularization', default='dropout2d', type=click.Choice(['dropout', 'dropout2d', 'batchnorm']))
+@click.option('-t', '--train', default='val', help='original train set (for codec)')
 @click.argument('test', nargs=1)
-def eval(model, workers, device, valid_seq_len, seq_len, hidden, layers, kernel, batch_size, regularization, test):
+def eval(model, workers, device, valid_seq_len, seq_len, hidden, layers, kernel, batch_size, regularization, train, test):
+    print('loading training set')
+    train_set = TextSet(glob.glob('{}/**/*.txt'.format(train), recursive=True))
+    train_data_loader = DataLoader(dataset=train_set, num_workers=workers, batch_size=batch_size, pin_memory=True)
+
     print('loading test set')
+
     test_set = TextSet(glob.glob('{}/**/*.txt'.format(test), recursive=True))
     test_data_loader = DataLoader(dataset=test_set, num_workers=workers, batch_size=batch_size, pin_memory=True)
 
