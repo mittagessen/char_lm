@@ -56,6 +56,43 @@ def cli():
     pass
 
 @cli.command()
+@click.option('-m', '--model', default=None, help='model name')
+@click.option('-w', '--workers', default=0, help='number of workers loading training data')
+@click.option('-d', '--device', default='cpu', help='pytorch device')
+@click.option('--valid-seq-len', default=320, help='part of the training sample used for back propagation')
+@click.option('--seq-len', default=400, help='total training sample sequence length')
+@click.option('--hidden', default=100, help='numer of hidden units per block')
+@click.option('--layers', default=3, help='number of 3-layer blocks')
+@click.option('--kernel', default=3, help='kernel size')
+@click.option('-N', '--batch-size', default=128, help='batch size')
+@click.option('-r', '--regularization', default='dropout2d', type=click.Choice(['dropout', 'dropout2d', 'batchnorm']))
+@click.argument('test', nargs=1)
+def eval(mode, workers, device, valid_seq_len, seq_len, hidden, layers, kernel, batch_size, regularization, test):
+    print('loading test set')
+    test_set = TextSet(glob.glob('{}/**/*.txt'.format(test), recursive=True))
+    test_data_loader = DataLoader(dataset=test_set, num_workers=workers, batch_size=batch_size, pin_memory=True)
+
+    device = torch.device(device)
+    model = CausalNet(train_set.oh_dim, train_set.oh_dim, hidden, layers, kernel, reg=regularization).to(device)
+    model.eval()
+    criterion = nn.CrossEntropyLoss()
+
+    loss = 0.0
+    with torch.no_grad():
+        with click.progressbar(test_data_loader, label='test') as bar:
+            for sample in bar:
+                input, target = sample[0].to(device), sample[1].to(device)
+                o = model(input)
+                o = o[:, :, :(seq_len - valid_seq_len)].contiguous()
+                target = target[:, :(seq_len - valid_seq_len)].contiguous()
+                loss += criterion(o, target)
+    val_loss = loss / len(test_data_loader)
+    print("===> bpc: {:.4f} (ppl char/word: {:.4f}/{:.4f})".format(1/np.log(2)*val_loss,
+                                                                   np.exp(val_loss),
+                                                                   np.exp(val_loss*test_set.avg_word_len())))
+
+
+@cli.command()
 @click.option('-n', '--name', default=None, help='prefix for checkpoint file names')
 @click.option('-l', '--lrate', default=0.3, help='initial learning rate')
 @click.option('-w', '--workers', default=0, help='number of workers loading training data')
