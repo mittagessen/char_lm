@@ -67,7 +67,7 @@ def cli():
 @click.option('-N', '--batch-size', default=128, help='batch size')
 @click.option('-r', '--regularization', default='dropout2d', type=click.Choice(['dropout', 'dropout2d', 'batchnorm']))
 @click.argument('test', nargs=1)
-def eval(mode, workers, device, valid_seq_len, seq_len, hidden, layers, kernel, batch_size, regularization, test):
+def eval(model, workers, device, valid_seq_len, seq_len, hidden, layers, kernel, batch_size, regularization, test):
     print('loading test set')
     test_set = TextSet(glob.glob('{}/**/*.txt'.format(test), recursive=True))
     test_data_loader = DataLoader(dataset=test_set, num_workers=workers, batch_size=batch_size, pin_memory=True)
