@@ -9,6 +9,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 
+from collections import defaultdict
 from char_lm.model import CausalNet
 from char_lm.dataset import TextSet
 
@@ -66,22 +67,26 @@ def cli():
 @click.option('--kernel', default=3, help='kernel size')
 @click.option('-N', '--batch-size', default=128, help='batch size')
 @click.option('-r', '--regularization', default='dropout2d', type=click.Choice(['dropout', 'dropout2d', 'batchnorm']))
-@click.option('-t', '--train', default='val', help='original train set (for codec)')
 @click.argument('test', nargs=1)
-def eval(model, workers, device, valid_seq_len, seq_len, hidden, layers, kernel, batch_size, regularization, train, test):
-    print('loading training set')
-    train_set = TextSet(glob.glob('{}/**/*.txt'.format(train), recursive=True))
-    train_data_loader = DataLoader(dataset=train_set, num_workers=workers, batch_size=batch_size, pin_memory=True)
+def eval(model, workers, device, valid_seq_len, seq_len, hidden, layers, kernel, batch_size, regularization, test):
+    print('loading model')
+
+    device = torch.device(device)
+    model_state = torch.load(model)
+    model = CausalNet(model_state['oh_dim'],
+                      model_state['oh_dim'],
+                      model_state['hidden'],
+                      model_state['layers'],
+                      model_state['kernel'],
+                      reg=model_state['regularization'])
+    model.load_state_dict(model_state['state_dict'], map_location=lambda storage, loc: storage)
+    model.eval()
+    criterion = nn.CrossEntropyLoss()
 
     print('loading test set')
 
-    test_set = TextSet(glob.glob('{}/**/*.txt'.format(test), recursive=True), chars=train_set.chars)
+    test_set = TextSet(glob.glob('{}/**/*.txt'.format(test), recursive=True), chars=defaultdict(lambda: 0, model_state['chars']))
     test_data_loader = DataLoader(dataset=test_set, num_workers=workers, batch_size=batch_size, pin_memory=True)
-
-    device = torch.device(device)
-    model = CausalNet(train_set.oh_dim, train_set.oh_dim, hidden, layers, kernel, reg=regularization).to(device)
-    model.eval()
-    criterion = nn.CrossEntropyLoss()
 
     loss = 0.0
     with torch.no_grad():
@@ -158,7 +163,16 @@ def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
                 epoch_loss += loss.item()
                 loss.backward()
                 opti.step()
-        torch.save(model.state_dict(), '{}_{}.ckpt'.format(name, epoch))
+        torch.save({'state_dict': model.state_dict(),
+                    'epoch': epoch,
+                    'seq_len': seq_len,
+                    'valid_seq_len': valid_seq_len,
+                    'hidden': hidden,
+                    'layers': layers,
+                    'kernel': kernel,
+                    'regularization': regularization,
+                    'chars': train_set.chars,
+                    'oh_dim': train_set.oh_dim}, '{}_{}.ckpt'.format(name, epoch))
         print("===> epoch {} complete: avg. loss: {:.4f}".format(epoch, epoch_loss / len(train_data_loader)))
         val_loss = evaluate(model, device, criterion, val_data_loader, seq_len, valid_seq_len)
         model.train()
