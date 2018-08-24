@@ -112,6 +112,7 @@ def eval(model, workers, device, valid_seq_len, seq_len, hidden, layers, kernel,
 @click.option('--lag', show_default=True, default=20, help='Number of epochs to wait before stopping training without improvement')
 @click.option('--min-delta', show_default=True, default=0.005, help='Minimum improvement between epochs to reset early stopping')
 @click.option('--optimizer', show_default=True, default='SGD', type=click.Choice(['SGD', 'Adam']), help='optimizer')
+@click.option('--clip', show_default=True, default=0.15, help='gradient clipping value')
 @click.option('--threads', default=min(len(os.sched_getaffinity(0)), 4))
 @click.option('--valid-seq-len', default=320, help='part of the training sample used for back propagation')
 @click.option('--seq-len', default=400, help='total training sample sequence length')
@@ -122,8 +123,8 @@ def eval(model, workers, device, valid_seq_len, seq_len, hidden, layers, kernel,
 @click.option('-r', '--regularization', default='dropout2d', type=click.Choice(['dropout', 'dropout2d', 'batchnorm']))
 @click.argument('ground_truth', nargs=1)
 def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
-          threads, valid_seq_len, seq_len, hidden, layers, kernel, batch_size,
-          regularization, ground_truth):
+          clip, threads, valid_seq_len, seq_len, hidden, layers, kernel,
+          batch_size, regularization, ground_truth):
 
     if not name:
         name = '{}_{}_{}_{}_{}_{}_{}_{}'.format(optimizer.lower(), lrate, valid_seq_len, seq_len, hidden, layers, kernel, regularization)
@@ -162,6 +163,8 @@ def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
                 loss = criterion(o, target)
                 epoch_loss += loss.item()
                 loss.backward()
+                if clip > 0:
+                    torch.nn.utils.clip_grad_norm(model.parameters(), clip)
                 opti.step()
         torch.save({'state_dict': model.state_dict(),
                     'epoch': epoch,
