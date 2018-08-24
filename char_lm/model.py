@@ -76,18 +76,16 @@ class CausalNet(nn.Module):
         l = []
         l.append(CausalBlock(input_size, out_channels, kernel_size, stride=1, dilation=1, dropout=dropout))
         for i in range(layers):
-            dilation_size = 2 ** i
+            dilation_size = 2 ** (i+1)
             l.append(CausalBlock(out_channels, out_channels, kernel_size,
                                  stride=1, dilation=dilation_size,
                                  dropout=dropout, reg=reg))
-        self.lin = nn.Linear(out_channels, output_size)
+        l.append(CausalBlock(out_channels, output_size, kernel_size, stride=1, dilation=(i+2**2), dropout=dropout, reg=reg))
         self.net = nn.Sequential(*l)
         self.init_weights()
 
     def forward(self, x):
-        o = self.net(x)
-        o = self.lin(o.transpose(1, 2))
-        return o.transpose(1, 2)
+        return self.net(x)
 
     def init_weights(self):
         def _wi(m):
