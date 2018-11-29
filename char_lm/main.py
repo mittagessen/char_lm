@@ -164,7 +164,7 @@ def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
                 epoch_loss += loss.item()
                 loss.backward()
                 if clip > 0:
-                    torch.nn.utils.clip_grad_norm(model.parameters(), clip)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
                 opti.step()
         torch.save({'state_dict': model.state_dict(),
                     'epoch': epoch,
