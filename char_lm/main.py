@@ -99,8 +99,8 @@ def eval(model, workers, device, valid_seq_len, seq_len, hidden, layers, kernel,
                 loss += criterion(o, target)
     val_loss = loss / len(test_data_loader)
     print("===> bpc: {:.4f} (ppl char/word: {:.4f}/{:.4f})".format(1/np.log(2)*val_loss,
-                                                                   np.exp(val_loss),
-                                                                   np.exp(val_loss*test_set.avg_word_len())))
+                                                                   np.exp(val_loss.cpu()),
+                                                                   np.exp(val_loss.cpu()*test_set.avg_word_len())))
 
 
 @cli.command()
@@ -182,8 +182,8 @@ def train(name, lrate, workers, device, validation, lag, min_delta, optimizer,
         st_it.update(val_loss)
         print("===> epoch {} bpc: {:.4f} (ppl char/word: {:.4f}/{:.4f})".format(epoch,
                                                                                 1/np.log(2)*val_loss,
-                                                                                np.exp(val_loss),
-                                                                                np.exp(val_loss*avg_word_len)))
+                                                                                np.exp(val_loss.cpu()),
+                                                                                np.exp(val_loss.cpu()*avg_word_len)))
 
 def evaluate(model, device, criterion, data_loader, seq_len, valid_seq_len):
     """
