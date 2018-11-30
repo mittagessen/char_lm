@@ -105,7 +105,7 @@ def eval(model, workers, device, valid_seq_len, seq_len, hidden, layers, kernel,
 
 @cli.command()
 @click.option('-n', '--name', default=None, help='prefix for checkpoint file names')
-@click.option('-l', '--lrate', default=0.001, help='initial learning rate')
+@click.option('-l', '--lrate', default=0.002, help='initial learning rate')
 @click.option('-w', '--workers', default=0, help='number of workers loading training data')
 @click.option('-d', '--device', default='cpu', help='pytorch device')
 @click.option('-v', '--validation', default='val', help='validation set location')
@@ -116,7 +116,7 @@ def eval(model, workers, device, valid_seq_len, seq_len, hidden, layers, kernel,
 @click.option('--threads', default=min(len(os.sched_getaffinity(0)), 4))
 @click.option('--valid-seq-len', default=320, help='part of the training sample used for back propagation')
 @click.option('--seq-len', default=400, help='total training sample sequence length')
-@click.option('--hidden', default=100, help='numer of hidden units per block')
+@click.option('--hidden', default=400, help='numer of hidden units per block')
 @click.option('--layers', default=3, help='number of 3-layer blocks')
 @click.option('--kernel', default=3, help='kernel size')
 @click.option('-N', '--batch-size', default=128, help='batch size')
